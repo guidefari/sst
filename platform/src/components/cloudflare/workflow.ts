@@ -90,6 +90,11 @@ export interface WorkflowArgs {
    */
   environment?: Input<Record<string, Input<string>>>;
   /**
+   * Configure [Cloudflare Workers observability](https://developers.cloudflare.com/workers/observability/)
+   * for the underlying Worker. See `WorkerArgs.observability` for details.
+   */
+  observability?: WorkerArgs["observability"];
+  /**
    * The Cloudflare account ID to use for this Workflow.
    * Overrides the default account ID set via `CLOUDFLARE_DEFAULT_ACCOUNT_ID`.
    * @internal
@@ -218,6 +223,7 @@ export class Workflow extends Component implements Link.Linkable {
             handler: args.handler,
             link: args.link,
             environment: args.environment,
+            observability: args.observability,
           },
           { parent },
         ),
