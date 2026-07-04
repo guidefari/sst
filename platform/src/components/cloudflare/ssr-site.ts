@@ -23,6 +23,11 @@ export type Plan = {
 export interface SsrSiteArgs extends BaseSsrSiteArgs {
   domain?: WorkerArgs["domain"];
   /**
+   * Configure [Cloudflare Workers observability](https://developers.cloudflare.com/workers/observability/)
+   * for the underlying Worker. See `WorkerArgs.observability` for details.
+   */
+  observability?: WorkerArgs["observability"];
+  /**
    * The Cloudflare account ID to use for this SsrSite.
    * Overrides the default account ID set via `CLOUDFLARE_DEFAULT_ACCOUNT_ID`.
    * @internal
@@ -244,6 +249,7 @@ export abstract class SsrSite extends Component implements Link.Linkable {
             url: true,
             dev: false,
             domain: args.domain,
+            observability: args.observability,
             handler: all([outputPath, plan.server]).apply(
               ([outputPath, server]) => path.join(outputPath, server),
             ),

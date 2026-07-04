@@ -7,6 +7,7 @@ import {
   all,
   jsonStringify,
   interpolate,
+  Output,
 } from "@pulumi/pulumi";
 import * as cf from "@pulumi/cloudflare";
 import type { Loader } from "esbuild";
@@ -385,6 +386,49 @@ export interface WorkerArgs {
     hostname?: Input<string>;
   }>;
   /**
+   * Configure [Cloudflare Workers observability](https://developers.cloudflare.com/workers/observability/)
+   * for your Worker. Lets you enable logs and traces with optional sampling rates.
+   *
+   * @example
+   *
+   * #### Traces only
+   * ```js
+   * {
+   *   observability: {
+   *     traces: { enabled: true, headSamplingRate: 0.1 }
+   *   }
+   * }
+   * ```
+   *
+   * #### Logs and traces
+   * ```js
+   * {
+   *   observability: {
+   *     logs: { enabled: true, headSamplingRate: 0.5 },
+   *     traces: { enabled: true, headSamplingRate: 0.1 }
+   *   }
+   * }
+   * ```
+   */
+  observability?: Input<{
+    /**
+     * Capture `console.*` output and invocation metadata for the Worker.
+     */
+    logs?: Input<{
+      enabled?: Input<boolean>;
+      headSamplingRate?: Input<number>;
+      invocationLogs?: Input<boolean>;
+    }>;
+    /**
+     * Capture platform operations (fetch, KV, R2, Durable Object, Queue) and any
+     * custom spans added in Worker code via `ctx.tracing`.
+     */
+    traces?: Input<{
+      enabled?: Input<boolean>;
+      headSamplingRate?: Input<number>;
+    }>;
+  }>;
+  /**
    * [Transform](/docs/components/#transform) how this component creates its underlying
    * resources.
    */
@@ -483,6 +527,7 @@ export class Worker extends Component implements Link.Linkable {
     const urlEnabled = normalizeUrl();
     const compatibility = normalizeCompatibility(args);
     const domain = normalizeDomain();
+    const observability = normalizeObservability();
 
     const bindings = buildBindings();
     const iamCredentials = createAwsCredentials();
@@ -580,6 +625,17 @@ export class Worker extends Component implements Link.Linkable {
         aliases: [],
         redirects: [],
       };
+    }
+
+    function normalizeObservability() {
+      if (!args.observability) return undefined;
+      return output(args.observability).apply((v) => ({
+        enabled: true,
+        logs: v.logs
+          ? { enabled: true, invocationLogs: true, ...v.logs }
+          : undefined,
+        traces: v.traces ? { enabled: true, ...v.traces } : undefined,
+      }));
     }
 
     function buildBindings() {
@@ -882,6 +938,9 @@ export class Worker extends Component implements Link.Linkable {
                 })),
               ],
             ),
+            observability: observability as
+              | Output<cf.types.input.WorkersScriptObservability>
+              | undefined,
           },
           { parent, ignoreChanges: ["scriptName"] },
         ),

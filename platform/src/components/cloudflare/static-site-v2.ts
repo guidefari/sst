@@ -148,6 +148,11 @@ export interface StaticSiteV2Args extends Omit<BaseStaticSiteArgs, "vite"> {
    * @default `"single-page-application"`
    */
   notFound?: Input<"single-page-application" | "404">;
+  /**
+   * Configure [Cloudflare Workers observability](https://developers.cloudflare.com/workers/observability/)
+   * for the underlying Worker. See `WorkerArgs.observability` for details.
+   */
+  observability?: WorkerArgs["observability"];
   /** @deprecated */
   indexPage?: string;
   /** @deprecated */
@@ -367,6 +372,7 @@ export class StaticSiteV2 extends Component implements Link.Linkable {
             url: true,
             dev: false,
             domain: args.domain,
+            observability: args.observability,
             assets: {
               directory: outputPath,
               htmlHandling,
